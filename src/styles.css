@@ -3,3 +3,7 @@
 html, body {
     background-color: silver;
 }
+
+#themecolors a {
+    cursor: pointer;
+}
