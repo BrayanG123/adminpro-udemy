@@ -12,7 +12,8 @@ import { PagesModule } from './pages/pages.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './login/register.component';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 
 // Servicios
 // import { SettingsService } from './services/settings/settings.service';
@@ -34,7 +35,9 @@ import { ChartsModule } from 'ng2-charts';
     PagesModule,
     APP_ROUTES,
     FormsModule,
-    ChartsModule
+    ReactiveFormsModule,
+    ChartsModule,
+    HttpClientModule
   ],
   providers: [],
   bootstrap: [AppComponent]
