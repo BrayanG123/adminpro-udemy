@@ -59,14 +59,14 @@ export class UsuarioService {
     return this.http.post( url, usuario )
                     .pipe( map( (resp: any) => {
 
-                      this.guardarStorange(resp.id, resp.token, resp.usuario);
+                      this.guardarStorage(resp.id, resp.token, resp.usuario);
                       
                       return true; //para devolver algo
                     }) );
                 
   }
 
-  guardarStorange( id:string, token:string, usuario:Usuario){
+  guardarStorage( id:string, token:string, usuario:Usuario){
     //En el localStorage solo se guardan Strings
     localStorage.setItem('id', id );
     localStorage.setItem('token', token );
@@ -96,18 +96,19 @@ export class UsuarioService {
     let url = URL_SERVICIOS + '/usuario/'+ usuario._id;
     url += '?token=' + this.token;
 
-    console.log(usuario, '1er');
 
     return this.http.put( url, usuario )
                 .pipe( map( (resp: any) => {
+
                     //en este caso no tenemos el token en la resp (averiguar porque)
-                    this.guardarStorange( resp.usuario._id, this.token, resp.usuario )
+                    if ( usuario._id === this.usuario._id ){ //el if es seguridad para actualizar en el perfil (tiene q actualizarse el mismo usuario q se loguea)
+                      this.guardarStorage( resp.usuario._id, this.token, resp.usuario )
+                    }
+
                     Swal.fire({
                       icon: 'success',
-                      // title: 'Realizado',
                       text: 'Usuario actualizado correctamente',
                     });
-                    console.log(resp.usuario);
                     return true;
                 } ) );
   }
@@ -123,10 +124,40 @@ export class UsuarioService {
                 // title: 'Realizado',
                 text: 'Imagen actualizada correctamente',
               });
-              this.guardarStorange( id, this.token, this.usuario);
+              this.guardarStorage( id, this.token, this.usuario);
 
             } );
             
   }
 
+  cargarUsuarios( desde:number = 0 ){
+    let url = URL_SERVICIOS + '/usuario?desde=' + desde;
+
+    return this.http.get( url ); //asi de sencillo
+  }
+
+  buscarUsuarios( termino:string ){
+    //localhot:3000/busqueda/coleccion/usuario/termino  <-- el link (es busqueda por nombre)
+    let url = URL_SERVICIOS + '/busqueda/coleccion/usuario/' + termino;
+
+    return this.http.get( url )
+              .pipe( map( (resp: any) => {  //vamos a filtrar la respuesta para q mande solo los usuarios
+                  return resp.usuario; //el mio es usuario (sin s)
+              } ) )
+  
+  }
+  
+  borrarUsuario( usuario: Usuario){
+    //localhot:3000/usuario/id/token  <-- link para borrar usuario  
+    let url = URL_SERVICIOS + '/usuario/' + usuario._id + '?token=' + this.token;
+    return this.http.delete( url )
+                    .pipe( map( resp => {
+                      Swal.fire(
+                        'Eliminado!',
+                        'El usuario ha sido eliminado.',
+                        'success'
+                      );
+                      return true;
+                    } ) );
+  }
 }
