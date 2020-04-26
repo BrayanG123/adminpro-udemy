@@ -44,7 +44,7 @@ export class UsuariosComponent implements OnInit {
 
   cambiarDesde( valor:number ){
     let desde = this.desde + valor;
-    console.log(desde);
+    // console.log(desde);
 
     if ( desde >= this.totalRegistros) {
       return;
@@ -58,7 +58,7 @@ export class UsuariosComponent implements OnInit {
   }
 
   buscarUsuario( termino:string ){
-    console.log(termino);
+    // console.log(termino);
 
     if ( !termino ){
       this.cargarUsuarios();
@@ -75,7 +75,7 @@ export class UsuariosComponent implements OnInit {
   }
 
   borrarUsuario( usuario: Usuario){
-    console.log(usuario);
+    // console.log(usuario);
 
     if (usuario._id === this._usuarioServices.usuario._id){
       Swal.fire({
