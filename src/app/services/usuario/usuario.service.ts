@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
+import {Observable, throwError} from 'rxjs';
 
 //Terceros
 import Swal from 'sweetalert2';
@@ -17,6 +18,7 @@ export class UsuarioService {
 
   usuario: Usuario;
   token:string;
+  menu: any = [];
 
   constructor( public http:HttpClient, 
                public router:Router, 
@@ -34,18 +36,22 @@ export class UsuarioService {
       this.token = localStorage.getItem('token');
       //JSON.parse tal parece que devuelve a su estado origninal
       this.usuario = JSON.parse(localStorage.getItem('usuario'));
+      this.menu = JSON.parse(localStorage.getItem('menu'));
     }else{
       this.token = '';
       this.usuario = null;
+      this.menu = []; //en caso de que no existiera el token hay q destruir el menu
     }
   }
 
   logOut(){
     this.usuario = null;
     this.token = '';
+    this.menu = [];
     
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
+    localStorage.removeItem('menu');
     
     this.router.navigate(['/login']);
   }
@@ -59,21 +65,35 @@ export class UsuarioService {
     return this.http.post( url, usuario )
                     .pipe( map( (resp: any) => {
 
-                      this.guardarStorage(resp.id, resp.token, resp.usuario);
-                      
-                      return true; //para devolver algo
-                    }) );
+                        this.guardarStorage(resp.id, resp.token, resp.usuario, resp.menu);
+                        console.log(resp);
+                        return true; //para devolver algo
+  
+                        }), catchError( err => {
+                                console.log(err.error.mensaje);
+                                Swal.fire({
+                                  icon: 'error',
+                                  title: 'Error',
+                                  text: err.error.mensaje,
+                                  // footer: '<a href>Why do I have this issue?</a>'
+                                })
+                                return throwError( err );
+                        } ) 
+                    );
+                    
                 
   }
 
-  guardarStorage( id:string, token:string, usuario:Usuario){
+  guardarStorage( id:string, token:string, usuario:Usuario, menu:any ){
     //En el localStorage solo se guardan Strings
     localStorage.setItem('id', id );
     localStorage.setItem('token', token );
     // JSON.stringify convierte un objeto a un JSON valido en formato string 
     localStorage.setItem('usuario', JSON.stringify(usuario) );
+    localStorage.setItem('menu', JSON.stringify(menu) );
     this.usuario = usuario;
     this.token = token;
+    this.menu = menu;
   }
 
   crearUsuario( usuario:Usuario ){
@@ -89,7 +109,16 @@ export class UsuarioService {
                       // footer: '<a href>Why do I have this issue?</a>'
                     })
                     return resp.usuario;
-                }));
+                }), catchError( err => {
+                  console.log(err.error.mensaje);
+                  Swal.fire({
+                    icon: 'error',
+                    title: err.error.mensaje,
+                    text: err.error.errors.message,
+                  })
+                  return throwError( err );
+                } ) 
+                );
   }
 
   actualizarUsuario( usuario:Usuario ){
@@ -102,7 +131,7 @@ export class UsuarioService {
 
                     //en este caso no tenemos el token en la resp (averiguar porque)
                     if ( usuario._id === this.usuario._id ){ //el if es seguridad para actualizar en el perfil (tiene q actualizarse el mismo usuario q se loguea)
-                      this.guardarStorage( resp.usuario._id, this.token, resp.usuario )
+                      this.guardarStorage( resp.usuario._id, this.token, resp.usuario, this.menu )
                     }
 
                     Swal.fire({
@@ -110,7 +139,17 @@ export class UsuarioService {
                       text: 'Usuario actualizado correctamente',
                     });
                     return true;
-                } ) );
+                } ), catchError( err => {
+                  console.log(err.error.mensaje);
+                  Swal.fire({
+                    icon: 'error',
+                    title: err.error.mensaje,
+                    text: err.error.errors.message,
+                  })
+                  return throwError( err );
+                } )        
+                
+                );
   }
 
   cambiarImagen( archivo:File, id:string ){
@@ -124,7 +163,7 @@ export class UsuarioService {
                 // title: 'Realizado',
                 text: 'Imagen actualizada correctamente',
               });
-              this.guardarStorage( id, this.token, this.usuario);
+              this.guardarStorage( id, this.token, this.usuario, this.menu);
 
             } );
             
